@@ -18,7 +18,11 @@
   },
   "homepage": "https://github.com/theericlau/order-service#readme",
   "dependencies": {
+    "cassandra-driver": "^3.3.0",
+    "chai": "^4.1.2",
     "express": "^4.16.2",
+    "faker": "^4.1.0",
+    "mocha": "^4.0.1",
     "mongodb": "^3.0.0-rc0",
     "mongoose": "^4.13.6",
     "path": "^0.12.7",

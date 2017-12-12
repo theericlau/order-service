@@ -2,20 +2,26 @@ const express = require('express');
 const app = express();
 const Orders = require('../database/Order.js');
 const db = require('../database/index.js');
+const faker = require('faker');
 
 
 app.get('/', () => {
   const apple = {
-    orderId: 1,
-    date: new Date(),
-    shippingAddress: 'chicken pmpmp',
-    orders: [{ productID: 1, quantity: 8 }],
+    orderId: faker.random.number(),
+    date: faker.date.past(),
+    shippingAddress: faker.address.streetAddress(),
+    items: [{ productID: faker.random.number(), quantity: faker.random.number() }, { productID: faker.random.number(), quantity: faker.random.number() }],
     shippingOption: 'Prime',
-    totalPrice: 8,
-    payment: { cardNumber: 1234131344 },
+    totalPrice: faker.commerce.price(),
+    payment: {
+      name: faker.name.firstName() + ' ' + faker.name.lastName(),
+      cardNumber: faker.random.number(),
+      cardType: 'VISA',
+    },
     status: 'Pending',
   };
-  Orders.saveOrder(apple);
+  console.log(apple);
+  // Orders.saveOrder(apple);
 });
 
 app.listen(8000, () => {

@@ -5,25 +5,24 @@ const orderSchema = mongoose.Schema({
   orderId: Number,
   date: Date,
   shippingAddress: String,
-  orders: [{ productID: Number, quantity: Number }],
+  items: [{ productID: Number, quantity: Number }],
   shippingOption: String,
   totalPrice: Number,
-  payment: { cardNumber: Number },
+  payment: Object,
   status: Boolean,
 });
 
 const Order = mongoose.model('Order', orderSchema);
 
 const saveOrder = (data) => {
-  console.log('i get here', data);
   const order = new Order({
     orderId: data.orderId,
     date: data.date,
     shippingAddress: data.shippingAddress,
-    orders: data.orders,
+    items: data.orders,
     shippingOption: data.shippingOption,
     totalPrice: data.totalPrice,
-    payment: { cardNumber: data.payment.cardNumber },
+    payment: data.payment,
     status: data.status,
   });
   order.save((err, data) => {
