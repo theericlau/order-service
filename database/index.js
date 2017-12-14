@@ -36,9 +36,9 @@ const storeOrder = (order) => {
 };
 
 const generateOrders = () => {
-  // for (let i = 0; i < 200; i ++ ) {
+  for (let i = 0; i < 3; i ++ ) {
     orderGenerator(queryInsertOrders, db);
-  // }
+  }
 };
 
 module.exports.storeOrder = storeOrder;
