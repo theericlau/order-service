@@ -41,9 +41,10 @@ const weightListDays = {
 };
 
 const getRandomShippingByDay = (day) => {
-  console.log(day);
   const randomNum = rand(0, weightListDays[day].length - 1);
   return weightListDays[day][randomNum];
 };
 
 module.exports.getRandomShippingByDay = getRandomShippingByDay;
+module.exports.generateWeighedList = generateWeighedList;
+module.exports.rand = rand;

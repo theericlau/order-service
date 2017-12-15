@@ -1,6 +1,6 @@
 const express = require('express');
 const faker = require('faker');
-const { storeOrder, generateOrders } = require('../database/index.js');
+const { storeOrder, generateOrders } = require('../database/index');
 
 const app = express();
 app.get('/', () => {

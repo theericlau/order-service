@@ -1,9 +1,13 @@
 const cassandra = require('cassandra-driver');
-const { orderGenerator } = require('./ordergenerator.js');
+const { orderGenerator } = require('./ordergenerator');
 
 const db = new cassandra.Client({ contactPoints: ['127.0.0.1'], keyspace: 'orders' });
+
+const queryCreateTableOrder = 'CREATE TABLE IF NOT EXISTS OrderNumber(id uuid, date text, shippingaxsddress text, products list < frozen < orders >>, shippingoption text, totalprice double, payment paymentInfo, status text, PRIMARY KEY(id));';
+
 db.connect((err, result) => {
   console.log('Index: cassandra connected');
+  db.execute(queryCreateTableOrder);
 });
 
 /* CREATE KEYSPACE orders WITH REPLICATION = { 'class': 'SimpleStrategy', 'replication_factor': 3}
@@ -28,18 +32,19 @@ status text,
 PRIMARY KEY(id)
 );
 */
+
+
 const queryInsertOrders = 'INSERT INTO orderNumber(id, date, shippingAddress, products, shippingOption, totalPrice, payment, status) VALUES (now(), ?, ?, ?, ?, ?, ?, ?)';
 
-const storeOrder = (order) => {
-  console.log('im in the storeorder', order);
-  return db.execute(queryInsertOrders, order, { prepare: true });
-};
+const storeOrder = order => (
+  db.execute(queryInsertOrders, order, { prepare: true })
+);
 
-const generateOrders = () => {
-  for (let i = 0; i < 3; i ++ ) {
-    orderGenerator(queryInsertOrders, db);
-  }
-};
+const generateOrders = () => (
+  // for (let i = 0; i < 3; i ++ ) {
+  orderGenerator(queryInsertOrders, db)
+  // }
+);
 
 module.exports.storeOrder = storeOrder;
 module.exports.generateOrders = generateOrders;
