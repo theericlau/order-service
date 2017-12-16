@@ -1,26 +1,31 @@
 const express = require('express');
 const faker = require('faker');
 const { storeOrder, generateOrders } = require('../database/index');
-
+const bodyParser = require('body-parser');
 const app = express();
-app.get('/', () => {
-  // for (let i = 0; i < 200; i++) {
+
+app.use(bodyParser.json());
+
+app.get('/orders', (req, res) => {
+  console.log('hello');
   generateOrders();
-  // };
+  res.send('hello sexy jun');
 });
 
-app.listen(8000, () => {
+app.post('/orders/addcart', (req, res) => {
+  console.log(req);
+  res.send();
+});
+
+app.post('/orders/checkout', (req, res) => {
+  res.send();
+});
+
+app.post('/orders/submitorder', (req, res) => {
+  console.log(req.body);
+  res.send();
+});
+
+app.listen(process.env.PORT || 8000, () => {
   console.log('Listening to Port 8000');
 });
-
-
-// let random_num
-//   , item;
-
-// for (let i = 0; i < 10000; i++) {
-//   random_num = rand(0, weighed_list.length - 1);
-//   item = weighed_list[random_num];
-//   ++random_check[item];
-// }
-
-// console.log(random_check);

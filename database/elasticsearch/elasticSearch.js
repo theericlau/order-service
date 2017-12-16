@@ -5,7 +5,7 @@ const elasticClient = new elasticsearch.Client({
   log: 'info',
 });
 
-const indexName = "Orders";
+const indexName = "orders";
 
 /**
 * Delete an existing index
@@ -40,6 +40,7 @@ const initMapping = () => (
     type: "document",
     body: {
       properties: {
+        userid: { type: 'integer' },
         date: { type: 'string' },
         shippingaddress: { type: 'string' },
         products: {
@@ -64,7 +65,27 @@ const initMapping = () => (
   })
 );
 
+const addDocument = document => (
+  elasticClient.index({
+    index: indexName,
+    type: "document",
+    body: {
+      date: document.date,
+      shippingaddress: document.shippingaddress,
+      products: document.products,
+      shippingoption: document.shippingoption,
+      totalprice: document.totalprice,
+      payment: {
+        name: document.payment.name,
+        cardnumber: document.payment.cardnumber,
+        cardtype: document.payment.cardtype,
+      },
+      status: document.status,
+    },
+  })
+);
 
+module.exports.addDocument = addDocument;
 module.exports.deleteIndex = deleteIndex;
 module.exports.initIndex = initIndex;
 module.exports.indexExists = indexExists;

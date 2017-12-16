@@ -3,7 +3,7 @@ const { orderGenerator } = require('./ordergenerator');
 
 const db = new cassandra.Client({ contactPoints: ['127.0.0.1'], keyspace: 'orders' });
 
-const queryCreateTableOrder = 'CREATE TABLE IF NOT EXISTS OrderNumber(id uuid, date text, shippingaxsddress text, products list < frozen < orders >>, shippingoption text, totalprice double, payment paymentInfo, status text, PRIMARY KEY(id));';
+const queryCreateTableOrder = 'CREATE TABLE IF NOT EXISTS OrderNumber(id uuid, userid bigint, date text, shippingaddress text, products list < frozen < orders >>, shippingoption text, totalprice double, payment paymentInfo, status text, PRIMARY KEY(id));';
 
 db.connect((err, result) => {
   console.log('Index: cassandra connected');
@@ -17,20 +17,9 @@ db.connect((err, result) => {
 create custom object types for ones not specified
 
 create type orders(productID int, quantity int);
-create type paymentInfo(name text, cardNumber int, cardType text);
+create type paymentInfo(name text, cardNumber bigint, cardType text);
 orders list< frozen <order>>
 
-CREATE TABLE OrderNumber(
-id uuid,
-date date,
-shippingaddress text,
-products list<frozen <orders>>,
-shippingoption text,
-totalprice double,
-payment paymentInfo,
-status text,
-PRIMARY KEY(id)
-);
 */
 
 
@@ -41,9 +30,7 @@ const storeOrder = order => (
 );
 
 const generateOrders = () => (
-  // for (let i = 0; i < 3; i ++ ) {
   orderGenerator(queryInsertOrders, db)
-  // }
 );
 
 module.exports.storeOrder = storeOrder;
