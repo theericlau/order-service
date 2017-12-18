@@ -5,14 +5,13 @@ const cartGenerator = (query, client) => {
   const arr = [];
   for (let i = 0; i < 100; i++){
     const cart = {
-      userid: JSON.parse((Math.random() * 100000000).toFixed(0)),
       cart: generateRandomProductList(),
     };
     arr.push({ query, params: cart });
   }
   client.batch(arr, { prepare: true }).then(success => {
     counter += 100;
-    if (counter < 5000000) {
+    if (counter < 1000000) {
       cartGenerator(query, client);
     }
     console.log(counter);

@@ -1,6 +1,7 @@
 const express = require('express');
 const { storeOrder, storeCart, generateOrders, generateCart } = require('../database/index');
 const bodyParser = require('body-parser');
+const { queryGetCart } = require('../database/index');
 
 const app = express();
 
@@ -28,9 +29,15 @@ app.post('/orders/checkout', (req, res) => {
 });
 
 app.post('/orders/submitorder', (req, res) => {
-  storeOrder(req.body).then(success => {
-    res.send()
+  // console.log(req.body.userid);
+  queryGetCart(req.body.userid)
+  .then(success => {
+    console.log('im back', success);
   })
+  // storeOrder(req.body)
+  // .then(success => {
+  //   res.send()
+  // })
 });
 
 app.listen(process.env.PORT || 8000, () => {

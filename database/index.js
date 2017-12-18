@@ -7,30 +7,28 @@ const db = new cassandra.Client({ contactPoints: ['127.0.0.1'], keyspace: 'order
 
 const queryCreateTableOrder = 'CREATE TABLE IF NOT EXISTS OrderNumber(id uuid, userid bigint, date text, shippingaddress text, cart list < frozen < orders >>, shippingoption text, totalprice double, payment paymentInfo, status text, PRIMARY KEY(id));';
 
-const queryCreateTableCart = 'CREATE TABLE IF NOT EXISTS Cart(id uuid, userid bigint, cart list < frozen < orders >>, PRIMARY KEY(id, userid));';
+const queryCreateTableCart = 'CREATE TABLE IF NOT EXISTS Cart(userid uuid, cart list < frozen < orders >>, PRIMARY KEY(userid));';
 
 const queryInsertOrders = 'INSERT INTO ordernumber(id, date, shippingAddress, cart, shippingOption, totalPrice, payment, status) VALUES (now(), ?, ?, ?, ?, ?, ?, ?)';
 
-const queryInsertCart = 'INSERT INTO cart(id, userid, cart) VALUES (now(), ?, ?);';
+const queryInsertCart = 'INSERT INTO cart(userid, cart) VALUES (now(), ?);';
+
+const queryGetCart = (userid) => {
+  const query = `SELECT * FROM cart WHERE userid=${userid};`;
+  db.execute(query)
+  .then(success => {
+    return success.rows[0].cart;
+  })
+  .catch(error => {
+    console.log(error);
+  })
+}
 
 db.connect((err, result) => {
   console.log('Index: cassandra connected');
   db.execute(queryCreateTableOrder);
   db.execute(queryCreateTableCart);
 });
-
-/* CREATE KEYSPACE orders WITH REPLICATION = { 'class': 'SimpleStrategy', 'replication_factor': 3}
-
-*/
-/*
-create custom object types for ones not specified
-
-create type orders(productID int, quantity int);
-create type paymentInfo(name text, cardNumber bigint, cardType text);
-orders list< frozen <order>>
-
-*/
-
 
 const storeOrder = order => (
   db.execute(queryInsertOrders, order, { prepare: true })
@@ -52,8 +50,21 @@ const generateCart = () => (
   cartGenerator(queryInsertCart, db)
 );
 
+module.exports.queryGetCart = queryGetCart;
 module.exports.generateCart = generateCart;
 module.exports.storeCart = storeCart;
 module.exports.storeOrder = storeOrder;
 module.exports.generateOrders = generateOrders;
 module.exports.db = db;
+
+/* CREATE KEYSPACE orders WITH REPLICATION = { 'class': 'SimpleStrategy', 'replication_factor': 3}
+
+*/
+/*
+create custom object types for ones not specified
+
+create type orders(productID int, quantity int);
+create type paymentInfo(name text, cardNumber bigint, cardType text);
+orders list< frozen <order>>
+
+*/
