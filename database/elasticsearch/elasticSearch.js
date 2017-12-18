@@ -43,7 +43,7 @@ const initMapping = () => (
         userid: { type: 'integer' },
         date: { type: 'string' },
         shippingaddress: { type: 'string' },
-        products: {
+        cart: {
           type: 'nested',
           properties: {
             productid: { type: 'integer' },
@@ -70,9 +70,10 @@ const addDocument = document => (
     index: indexName,
     type: "document",
     body: {
+      userid: document.userid,
       date: document.date,
       shippingaddress: document.shippingaddress,
-      products: document.products,
+      cart: document.cart,
       shippingoption: document.shippingoption,
       totalprice: document.totalprice,
       payment: {

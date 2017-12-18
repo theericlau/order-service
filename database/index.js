@@ -1,13 +1,22 @@
 const cassandra = require('cassandra-driver');
 const { orderGenerator } = require('./ordergenerator');
+const { cartGenerator } = require('./cartgenerator');
+const { addDocument } = require('./elasticsearch/elasticSearch');
 
 const db = new cassandra.Client({ contactPoints: ['127.0.0.1'], keyspace: 'orders' });
 
-const queryCreateTableOrder = 'CREATE TABLE IF NOT EXISTS OrderNumber(id uuid, userid bigint, date text, shippingaddress text, products list < frozen < orders >>, shippingoption text, totalprice double, payment paymentInfo, status text, PRIMARY KEY(id));';
+const queryCreateTableOrder = 'CREATE TABLE IF NOT EXISTS OrderNumber(id uuid, userid bigint, date text, shippingaddress text, cart list < frozen < orders >>, shippingoption text, totalprice double, payment paymentInfo, status text, PRIMARY KEY(id));';
+
+const queryCreateTableCart = 'CREATE TABLE IF NOT EXISTS Cart(id uuid, userid bigint, cart list < frozen < orders >>, PRIMARY KEY(id, userid));';
+
+const queryInsertOrders = 'INSERT INTO ordernumber(id, date, shippingAddress, cart, shippingOption, totalPrice, payment, status) VALUES (now(), ?, ?, ?, ?, ?, ?, ?)';
+
+const queryInsertCart = 'INSERT INTO cart(id, userid, cart) VALUES (now(), ?, ?);';
 
 db.connect((err, result) => {
   console.log('Index: cassandra connected');
   db.execute(queryCreateTableOrder);
+  db.execute(queryCreateTableCart);
 });
 
 /* CREATE KEYSPACE orders WITH REPLICATION = { 'class': 'SimpleStrategy', 'replication_factor': 3}
@@ -23,16 +32,28 @@ orders list< frozen <order>>
 */
 
 
-const queryInsertOrders = 'INSERT INTO orderNumber(id, date, shippingAddress, products, shippingOption, totalPrice, payment, status) VALUES (now(), ?, ?, ?, ?, ?, ?, ?)';
-
 const storeOrder = order => (
   db.execute(queryInsertOrders, order, { prepare: true })
+  .then(success => {
+    addDocument(order);
+  })
 );
 
 const generateOrders = () => (
+
   orderGenerator(queryInsertOrders, db)
 );
 
+const storeCart = cart => (
+  db.execute(queryInsertCart, cart, { prepare: true })
+);
+
+const generateCart = () => (
+  cartGenerator(queryInsertCart, db)
+);
+
+module.exports.generateCart = generateCart;
+module.exports.storeCart = storeCart;
 module.exports.storeOrder = storeOrder;
 module.exports.generateOrders = generateOrders;
 module.exports.db = db;

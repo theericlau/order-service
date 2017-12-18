@@ -30,32 +30,31 @@ const orderGenerator = (query, client) => {
       userid: JSON.parse((Math.random() * 100000000).toFixed(0)),
       date: days[Math.floor(Math.random() * days.length)],
       shippingaddress: faker.address.streetAddress(),
-      products: generateRandomProductList(),
+      cart: generateRandomProductList(),
       shippingoption: '',
       totalprice: JSON.parse((Math.random() * 1000).toFixed(2)),
       payment: {
         name: `${faker.name.firstName()} ${faker.name.lastName()}`,
-        cardnumber: faker.random.number(),
+        cardnumber: 0,
         cardtype: cards[Math.floor(Math.random() * cards.length)],
       },
       status: getRandomStatus(),
     };
     order.payment.cardnumber = JSON.parse(generator.GenCC(order.payment.cardtype)[0]);
-    console.log(order.payment.cardnumber);
     order.shippingoption = getRandomShippingByDay(order.date);
     // console.log(order);
     arr.push({ query, params: order });
-    // addDocument(order).then(success => {
-    //   ecounter = ecounter + 1;
+    addDocument(order).then(success => {
+      ecounter = ecounter + 1;
     //   if (ecounter < 10000000) {
     //     orderGenerator(query,client);
     //   }
-    //   // console.log(ecounter);
-    // });
+      console.log(ecounter);
+    });
   }
   recurse();
-  // client.batch(arr, { prepare: true }).then((success) => {
-  //   counter += 1;
+  client.batch(arr, { prepare: true }).then((success) => {
+    // counter += 1;
   //   console.log('im the count', counter);
   //   // counter += 100;
   //   // if (counter < 3000000) {
@@ -63,7 +62,7 @@ const orderGenerator = (query, client) => {
   //   // // }
   //   // console.log(counter);
   // // });
-  // });
+  });
 };
 
 module.exports.orderGenerator = orderGenerator;
