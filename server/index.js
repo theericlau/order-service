@@ -22,26 +22,33 @@ app.get('/orders/generatecart', (req, res) => {
 
 
 app.post('/orders/addcart', (req, res) => {
-  storeCart(req.body).then((success) => {
-    res.send(success);
-  });
+  return storeCart(req.body)
+    .then((success) => {
+      res.status(200).send(success);
+    })
+    .catch((error) => {
+      res.status(404).send(error);
+    });
 });
 
-app.post('/orders/checkout', (req, res) => {
-  console.log(req.body);
-  const checkout = {
-    userid: req.body.userid,
-    address: req.body.address,
-  }
-  return queryGetCart(req.body.userid)
-  .then((success) => {
-    // console.log('success', success);
-    checkout.cart = success;
-    // console.log(checkout)
-    sendCheckoutToIncentive(checkout);
-  })
-  res.send();
-});
+// app.post('/orders/checkout', (req, res) => {
+//   console.log(req.body);
+//   const checkout = {
+//     userid: req.body.userid,
+//     address: req.body.address,
+//   };
+//   queryGetCart(req.body.userid)
+//     .then((data) => {
+//       // console.log('success', success);
+//       checkout.cart = data;
+//       // console.log(checkout)
+//       sendCheckoutToIncentive(checkout);
+//     })
+//     .then((success) => {
+//       console.log('i fakes new', success);
+//     })
+//   res.send();
+// });
 
 app.post('/orders/submitorder', (req, res) => {
   const order = req.body;
@@ -62,6 +69,9 @@ app.post('/orders/submitorder', (req, res) => {
     })
     .then((status) => {
       return queryUpdateOrders(status);
+    })
+    .catch((error) => {
+      res.status(404).send(error);
     });
 });
 

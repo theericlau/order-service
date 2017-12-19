@@ -1,5 +1,4 @@
 const cassandra = require('cassandra-driver');
-const Promise = require('bluebird');
 const { orderGenerator } = require('./ordergenerator');
 const { cartGenerator } = require('./cartgenerator');
 const { addDocument } = require('./elasticsearch/elasticSearch');
@@ -14,28 +13,6 @@ const queryInsertOrders = 'INSERT INTO ordernumber(id, userid, date, shippingAdd
 
 const queryInsertCart = 'INSERT INTO cart(userid, cart) VALUES (?, ?);';
 
-const queryUpdateOrders = (status) => {
-  const query = `UPDATE ordernumber SET failstatus=[${status.failstatus}] WHERE id=${status.orderid};`;
-  db.execute(query)
-    .then((success) => {
-      // console.log('im successful', success);
-    })
-    .catch((err) => {
-      // console.log('i errored', err);
-    })
-};
-
-const queryGetCart = (userid) => {
-  const query = `SELECT * FROM cart WHERE userid=${userid};`;
-  return db.execute(query)
-  .then(success => {
-    // console.log(success.rows[0].cart);
-    return success.rows[0].cart;
-  })
-  .catch(error => {
-    console.log(error);
-  })
-}
 
 db.connect((err, result) => {
   console.log('Index: cassandra connected');
@@ -43,9 +20,23 @@ db.connect((err, result) => {
   db.execute(queryCreateTableCart);
 });
 
-const storeOrder = order => {
-  return db.execute(queryInsertOrders, order, { prepare: true })
+const queryUpdateOrders = (status) => {
+  const query = `UPDATE ordernumber SET failstatus=[${status.failstatus}] WHERE id=${status.orderid};`;
+  db.execute(query)
+    .then(success => success)
+    .catch(error => error);
 };
+
+const queryGetCart = (userid) => {
+  const query = `SELECT * FROM cart WHERE userid=${userid};`;
+  return db.execute(query)
+    .then(success => success.rows[0].cart)
+    .catch(error => error);
+};
+
+const storeOrder = order => (
+  db.execute(queryInsertOrders, order, { prepare: true })
+);
 
 const generateOrders = () => (
 
@@ -54,19 +45,23 @@ const generateOrders = () => (
 
 const storeCart = cart => (
   db.execute(queryInsertCart, cart, { prepare: true })
+    .then(success => success)
+    .catch(error => error)
 );
 
 const generateCart = () => (
   cartGenerator(queryInsertCart, db)
 );
 
-module.exports.queryUpdateOrders = queryUpdateOrders;
-module.exports.queryGetCart = queryGetCart;
-module.exports.generateCart = generateCart;
-module.exports.storeCart = storeCart;
-module.exports.storeOrder = storeOrder;
-module.exports.generateOrders = generateOrders;
-module.exports.db = db;
+module.exports = {
+  db,
+  queryUpdateOrders,
+  queryGetCart,
+  generateCart,
+  storeCart,
+  storeOrder,
+  generateOrders,
+};
 
 /* CREATE KEYSPACE orders WITH REPLICATION = { 'class': 'SimpleStrategy', 'replication_factor': 3}
 
