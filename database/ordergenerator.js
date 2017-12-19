@@ -38,7 +38,7 @@ const orderGenerator = (query, client) => {
         cardnumber: 0,
         cardtype: cards[Math.floor(Math.random() * cards.length)],
       },
-      status: getRandomStatus(),
+      status: [],
     };
     order.payment.cardnumber = JSON.parse(generator.GenCC(order.payment.cardtype)[0]);
     order.shippingoption = getRandomShippingByDay(order.date);

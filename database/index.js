@@ -6,22 +6,30 @@ const { addDocument } = require('./elasticsearch/elasticSearch');
 
 const db = new cassandra.Client({ contactPoints: ['127.0.0.1'], keyspace: 'orders' });
 
-const queryCreateTableOrder = 'CREATE TABLE IF NOT EXISTS OrderNumber(id int, userid int, date text, shippingaddress text, cart list < frozen < orders >>, shippingoption text, totalprice double, payment paymentInfo, status text, PRIMARY KEY(id));';
+const queryCreateTableOrder = 'CREATE TABLE IF NOT EXISTS OrderNumber(id int, userid int, date text, shippingaddress text, cart list < frozen < orders >>, shippingoption text, totalprice double, payment paymentInfo, failstatus list<int>, PRIMARY KEY(id));';
 
 const queryCreateTableCart = 'CREATE TABLE IF NOT EXISTS Cart(userid int, cart list < frozen < orders >>, PRIMARY KEY(userid));';
 
-const queryInsertOrders = 'INSERT INTO ordernumber(id, userid, date, shippingAddress, cart, shippingOption, totalPrice, payment, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
+const queryInsertOrders = 'INSERT INTO ordernumber(id, userid, date, shippingAddress, cart, shippingOption, totalPrice, payment, failstatus) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
 
 const queryInsertCart = 'INSERT INTO cart(userid, cart) VALUES (?, ?);';
 
-const queryUpdateOrders = (order) => {
- `UPDATE cart SET status=${order.statusid} WHERE orderid=${order.orderid}`
+const queryUpdateOrders = (status) => {
+  const query = `UPDATE ordernumber SET failstatus=[${status.failstatus}] WHERE id=${status.orderid};`;
+  db.execute(query)
+    .then((success) => {
+      // console.log('im successful', success);
+    })
+    .catch((err) => {
+      // console.log('i errored', err);
+    })
 };
 
 const queryGetCart = (userid) => {
   const query = `SELECT * FROM cart WHERE userid=${userid};`;
   return db.execute(query)
   .then(success => {
+    // console.log(success.rows[0].cart);
     return success.rows[0].cart;
   })
   .catch(error => {
@@ -37,9 +45,6 @@ db.connect((err, result) => {
 
 const storeOrder = order => {
   return db.execute(queryInsertOrders, order, { prepare: true })
-  // .then(success => {
-  //   console.log('im success', success);
-  // })
 };
 
 const generateOrders = () => (
@@ -55,6 +60,7 @@ const generateCart = () => (
   cartGenerator(queryInsertCart, db)
 );
 
+module.exports.queryUpdateOrders = queryUpdateOrders;
 module.exports.queryGetCart = queryGetCart;
 module.exports.generateCart = generateCart;
 module.exports.storeCart = storeCart;

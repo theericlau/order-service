@@ -4,10 +4,7 @@ const sendOrderToInventory = order => (
   new Promise((resolve, reject) => {
     const inventoryStatus = {
       orderid: order.orderId,
-      status: {
-        success: order.cart,
-        fail: order.cart[0],
-      },
+      failstatus: [order.cart[0].productid],
     };
     if (order) {
       resolve(inventoryStatus);
