@@ -1,9 +1,11 @@
 const express = require('express');
-const { storeOrder, storeCart, generateOrders, generateCart } = require('../database/index');
+const { storeOrder, storeCart, generateOrders, generateCart, queryUpdateOrders } = require('../database/index');
+const { sendOrderToInventory } = require('./inventoryService');
 const bodyParser = require('body-parser');
 const { queryGetCart } = require('../database/index');
 
 const app = express();
+let orderIdCounter = 1;
 
 app.use(bodyParser.json());
 
@@ -19,8 +21,8 @@ app.get('/orders/generatecart', (req, res) => {
 
 
 app.post('/orders/addcart', (req, res) => {
-  storeCart(req.body).then(success => {
-    res.send();
+  storeCart(req.body).then((success) => {
+    res.send(success);
   });
 });
 
@@ -29,15 +31,25 @@ app.post('/orders/checkout', (req, res) => {
 });
 
 app.post('/orders/submitorder', (req, res) => {
-  // console.log(req.body.userid);
+  const order = req.body;
+  res.status(200).send('success');
   queryGetCart(req.body.userid)
-  .then(success => {
-    console.log('im back', success);
-  })
-  // storeOrder(req.body)
-  // .then(success => {
-  //   res.send()
-  // })
+    .then((cart) => {
+      order.cart = cart;
+      order.id = orderIdCounter;
+      orderIdCounter += 1;
+      return storeOrder(order);
+    })
+    .then((success) => {
+      const inventoryOrder = {
+        orderId: order.id,
+        cart: order.cart,
+      };
+      return sendOrderToInventory(inventoryOrder);
+    })
+    .then((order) => {
+      queryUpdateOrders(order)
+    })
 });
 
 app.listen(process.env.PORT || 8000, () => {

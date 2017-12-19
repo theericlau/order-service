@@ -1,21 +1,26 @@
 const cassandra = require('cassandra-driver');
+const Promise = require('bluebird');
 const { orderGenerator } = require('./ordergenerator');
 const { cartGenerator } = require('./cartgenerator');
 const { addDocument } = require('./elasticsearch/elasticSearch');
 
 const db = new cassandra.Client({ contactPoints: ['127.0.0.1'], keyspace: 'orders' });
 
-const queryCreateTableOrder = 'CREATE TABLE IF NOT EXISTS OrderNumber(id uuid, userid bigint, date text, shippingaddress text, cart list < frozen < orders >>, shippingoption text, totalprice double, payment paymentInfo, status text, PRIMARY KEY(id));';
+const queryCreateTableOrder = 'CREATE TABLE IF NOT EXISTS OrderNumber(id int, userid int, date text, shippingaddress text, cart list < frozen < orders >>, shippingoption text, totalprice double, payment paymentInfo, status text, PRIMARY KEY(id));';
 
-const queryCreateTableCart = 'CREATE TABLE IF NOT EXISTS Cart(userid uuid, cart list < frozen < orders >>, PRIMARY KEY(userid));';
+const queryCreateTableCart = 'CREATE TABLE IF NOT EXISTS Cart(userid int, cart list < frozen < orders >>, PRIMARY KEY(userid));';
 
-const queryInsertOrders = 'INSERT INTO ordernumber(id, date, shippingAddress, cart, shippingOption, totalPrice, payment, status) VALUES (now(), ?, ?, ?, ?, ?, ?, ?)';
+const queryInsertOrders = 'INSERT INTO ordernumber(id, userid, date, shippingAddress, cart, shippingOption, totalPrice, payment, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
 
-const queryInsertCart = 'INSERT INTO cart(userid, cart) VALUES (now(), ?);';
+const queryInsertCart = 'INSERT INTO cart(userid, cart) VALUES (?, ?);';
+
+const queryUpdateOrders = (order) => {
+ `UPDATE cart SET status=${order.statusid} WHERE orderid=${order.orderid}`
+};
 
 const queryGetCart = (userid) => {
   const query = `SELECT * FROM cart WHERE userid=${userid};`;
-  db.execute(query)
+  return db.execute(query)
   .then(success => {
     return success.rows[0].cart;
   })
@@ -30,12 +35,12 @@ db.connect((err, result) => {
   db.execute(queryCreateTableCart);
 });
 
-const storeOrder = order => (
-  db.execute(queryInsertOrders, order, { prepare: true })
-  .then(success => {
-    addDocument(order);
-  })
-);
+const storeOrder = order => {
+  return db.execute(queryInsertOrders, order, { prepare: true })
+  // .then(success => {
+  //   console.log('im success', success);
+  // })
+};
 
 const generateOrders = () => (
 
