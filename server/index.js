@@ -1,7 +1,8 @@
 const express = require('express');
 // const newrelic = require('newrelic');
-const redis = require('redis');
-const Promise = require('bluebird');
+const kue = require('kue');
+const queue = kue.createQueue();
+const { addCartCache } = require('./redisServer');
 
 const { storeOrder, storeCart, generateOrders, generateCart, queryUpdateOrders } = require('../database/index');
 const { sendOrderToInventory } = require('./inventoryService');
@@ -12,14 +13,6 @@ const { queryGetCart } = require('../database/index');
 const app = express();
 let orderIdCounter = 1;
 let counter =1;
-
-const client = redis.createClient();
-
-Promise.promisifyAll(redis.RedisClient.prototype);
-
-client.on('connect', function () {
-  console.log('Connected to Redis...');
-});
 
 app.use(bodyParser.json());
 
@@ -35,7 +28,10 @@ app.get('/orders/generatecart', (req, res) => {
 
 
 app.post('/orders/addcart', (req, res) => {
-  return storeCart(req.body)
+  addCartCache(req.body)
+    .then((cacheMessage) => {
+      return storeCart(req.body);
+    })
     .then((success) => {
       console.log('add cart success', success);
       res.status(200).send(success);
@@ -45,24 +41,24 @@ app.post('/orders/addcart', (req, res) => {
     });
 });
 
-// app.post('/orders/checkout', (req, res) => {
-//   console.log(req.body);
-//   const checkout = {
-//     userid: req.body.userid,
-//     address: req.body.address,
-//   };
-//   queryGetCart(req.body.userid)
-//     .then((data) => {
-//       // console.log('success', success);
-//       checkout.cart = data;
-//       // console.log(checkout)
-//       sendCheckoutToIncentive(checkout);
-//     })
-//     .then((success) => {
-//       console.log('i fakes new', success);
-//     })
-//   res.send();
-// });
+app.post('/orders/checkout', (req, res) => {
+  console.log(req.body);
+  const checkout = {
+    userid: req.body.userid,
+    address: req.body.address,
+  };
+  queryGetCart(req.body.userid)
+    .then((data) => {
+      // console.log('success', success);
+      checkout.cart = data;
+      // console.log(checkout)
+      sendCheckoutToIncentive(checkout);
+    })
+    .then((success) => {
+      console.log('i fakes new', success);
+    })
+  res.send();
+});
 
 app.post('/orders/submitorder', (req, res) => {
   const order = req.body;
