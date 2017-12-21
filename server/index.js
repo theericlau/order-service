@@ -1,4 +1,8 @@
 const express = require('express');
+// const newrelic = require('newrelic');
+const redis = require('redis');
+const Promise = require('bluebird');
+
 const { storeOrder, storeCart, generateOrders, generateCart, queryUpdateOrders } = require('../database/index');
 const { sendOrderToInventory } = require('./inventoryService');
 const { sendCheckoutToIncentive } = require('./incentiveService');
@@ -7,6 +11,15 @@ const { queryGetCart } = require('../database/index');
 
 const app = express();
 let orderIdCounter = 1;
+let counter =1;
+
+const client = redis.createClient();
+
+Promise.promisifyAll(redis.RedisClient.prototype);
+
+client.on('connect', function () {
+  console.log('Connected to Redis...');
+});
 
 app.use(bodyParser.json());
 
@@ -24,6 +37,7 @@ app.get('/orders/generatecart', (req, res) => {
 app.post('/orders/addcart', (req, res) => {
   return storeCart(req.body)
     .then((success) => {
+      console.log('add cart success', success);
       res.status(200).send(success);
     })
     .catch((error) => {
@@ -68,7 +82,12 @@ app.post('/orders/submitorder', (req, res) => {
       return sendOrderToInventory(inventoryOrder);
     })
     .then((status) => {
+      // console.log('add cart success', status)
       return queryUpdateOrders(status);
+    })
+    .then((count) => {
+      console.log(counter);
+      counter +=1;
     })
     .catch((error) => {
       res.status(404).send(error);
