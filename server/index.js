@@ -1,8 +1,8 @@
 const express = require('express');
-// const newrelic = require('newrelic');
+const newrelic = require('newrelic');
 const kue = require('kue');
 const queue = kue.createQueue();
-const { addCartCache } = require('./redisServer');
+const { addCartCache, getCartCache } = require('./redisServer');
 
 const { storeOrder, storeCart, generateOrders, generateCart, queryUpdateOrders } = require('../database/index');
 const { sendOrderToInventory } = require('./inventoryService');
@@ -41,28 +41,52 @@ app.post('/orders/addcart', (req, res) => {
     });
 });
 
-app.post('/orders/checkout', (req, res) => {
-  console.log(req.body);
+app.get('/orders/checkout', (req, res) => {
   const checkout = {
     userid: req.body.userid,
     address: req.body.address,
   };
-  queryGetCart(req.body.userid)
-    .then((data) => {
-      // console.log('success', success);
-      checkout.cart = data;
-      // console.log(checkout)
-      sendCheckoutToIncentive(checkout);
-    })
-    .then((success) => {
-      console.log('i fakes new', success);
-    })
-  res.send();
+// Redis Implementation
+  getCartCache(req.body.userid)
+  .then((response) => {
+    if (response) {
+      checkout.cart = JSON.parse((response));
+      return sendCheckoutToIncentive(checkout);
+    } else {
+      return queryGetCart(req.body.userid)
+      .then((data) => {
+        checkout.cart = data;
+        return sendCheckoutToIncentive(checkout);
+      });
+    }
+  })
+  .then((success) => {
+    res.status(200).send(success);
+  })
+  .catch((error) => {
+    console.log('ierror');
+    res.status(404).send(error);
+  })
+
+// Normal without Cache
+  // queryGetCart(req.body.userid)
+  //   .then((data) => {
+  //     checkout.cart = data;
+  //     // console.log(checkout)
+  //     sendCheckoutToIncentive(checkout);
+  //   })
+  //   .then((success) => {
+  //     res.status(200).send(success);
+  //   })
+  //   .catch((error) => {
+  //     console.log('ierror');
+  //     res.status(404).send(error);
+  //   });
 });
 
 app.post('/orders/submitorder', (req, res) => {
   const order = req.body;
-  res.status(200).send('success');
+  res.send();
   queryGetCart(req.body.userid)
     .then((cart) => {
       order.cart = cart;

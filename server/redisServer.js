@@ -13,8 +13,13 @@ client.on('connect', function () {
 const addCartCache = (cart) => {
   console.log(cart);
   return client.setAsync(cart.userid, JSON.stringify(cart.cart));
-}
+};
+
+const getCartCache = (userid) => {
+  return client.getAsync(userid);
+};
 
 module.exports = {
   addCartCache,
-}
+  getCartCache,
+};
