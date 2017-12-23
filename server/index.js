@@ -86,15 +86,27 @@ app.get('/orders/checkout', (req, res) => {
 
 app.post('/orders/submitorder', (req, res) => {
   const order = req.body;
-  res.send();
-  queryGetCart(req.body.userid)
-    .then((cart) => {
-      order.cart = cart;
-      order.id = orderIdCounter;
-      orderIdCounter += 1;
-      return storeOrder(order);
+  order.id= orderIdCounter;
+  // res.status(200).send('success');
+  // Redis Implementation
+  getCartCache(req.body.userid)
+    .then((cacheCart) => {
+      if (cacheCart) {
+        order.cart = JSON.parse(cacheCart);
+        orderIdCounter += 1;
+        return storeOrder(order);
+      }
+      console.log('deadweight');
+      return queryGetCart(req.body.userid)
+        .then((cart) => {
+          order.cart = cart;
+          order.id = orderIdCounter;
+          orderIdCounter += 1;
+          return storeOrder(order);
+        });
     })
     .then((success) => {
+      console.log('i made it', success);
       const inventoryOrder = {
         orderId: order.id,
         cart: order.cart,
@@ -105,13 +117,32 @@ app.post('/orders/submitorder', (req, res) => {
       // console.log('add cart success', status)
       return queryUpdateOrders(status);
     })
-    .then((count) => {
-      console.log(counter);
-      counter +=1;
-    })
     .catch((error) => {
       res.status(404).send(error);
     });
+
+  // Normal request without Redis
+  // queryGetCart(req.body.userid)
+  //   .then((cart) => {
+      // order.cart = cart;
+      // order.id = orderIdCounter;
+      // orderIdCounter += 1;
+  //     return storeOrder(order);
+  //   })
+  //   .then((success) => {
+  //     const inventoryOrder = {
+  //       orderId: order.id,
+  //       cart: order.cart,
+  //     };
+  //     return sendOrderToInventory(inventoryOrder);
+  //   })
+  //   .then((status) => {
+  //     // console.log('add cart success', status)
+  //     return queryUpdateOrders(status);
+  //   })
+  //   .catch((error) => {
+  //     res.status(404).send(error);
+  //   });
 });
 
 app.listen(process.env.PORT || 8000, () => {
